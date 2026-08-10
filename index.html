@@ -1,0 +1,399 @@
+<!--
+  Step 11 — Browser frontend (deliberately plain, single file, vanilla JS).
+
+  Talks to bot.py over Pipecat's WebRTC transport via the client SDK. No build
+  step: the SDK loads from esm.sh, pinned through an import map so there's a
+  single client-js instance.
+
+  RUN (two terminals, from the project root):
+    1)  python bot.py                     # the bot, on http://localhost:7860
+    2)  python -m http.server 8000        # serve this page
+  Then open  http://localhost:8000/  and click Start Call.
+-->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mock Call — Advisor Training</title>
+
+<script type="importmap">
+{
+  "imports": {
+    "@pipecat-ai/client-js": "https://esm.sh/@pipecat-ai/client-js@1",
+    "@pipecat-ai/small-webrtc-transport": "https://esm.sh/@pipecat-ai/small-webrtc-transport@1?external=@pipecat-ai/client-js"
+  }
+}
+</script>
+
+<style>
+  :root { --bg:#14161a; --panel:#1d2026; --line:#2a2e37; --advisor:#2d6cdf;
+          --customer:#3a3f4b; --text:#e7e9ee; --muted:#9aa1ad; --danger:#e5484d;
+          --ok:#2fbf71; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: -apple-system, system-ui, sans-serif;
+         background:var(--bg); color:var(--text); height:100vh; display:flex;
+         flex-direction:column; }
+  header { padding:14px 20px; border-bottom:1px solid var(--line);
+           display:flex; align-items:center; justify-content:space-between; }
+  header .who { font-weight:600; font-size:17px; }
+  header .who small { color:var(--muted); font-weight:400; margin-left:8px; }
+  #timer { font-variant-numeric:tabular-nums; font-size:22px; font-weight:600;
+           color:var(--muted); }
+  #timer.warning { color:var(--danger); animation:pulse 1s infinite; }
+  @keyframes pulse { 50% { opacity:.45; } }
+  #status { font-size:13px; color:var(--muted); }
+
+  #transcript { flex:1; overflow-y:auto; padding:18px 20px; display:flex;
+                flex-direction:column; gap:10px; }
+  .bubble { max-width:78%; padding:9px 13px; border-radius:12px;
+            line-height:1.4; white-space:pre-wrap; word-wrap:break-word; }
+  .advisor { align-self:flex-end; background:var(--advisor); }
+  .customer { align-self:flex-start; background:var(--customer); }
+  .bubble .tag { display:block; font-size:11px; opacity:.7; margin-bottom:2px; }
+  .empty { color:var(--muted); margin:auto; text-align:center; }
+
+  .cost-card { align-self:center; width:min(460px,92%); background:var(--panel);
+               border:1px solid var(--line); border-radius:14px; padding:16px 18px;
+               margin-top:8px; }
+  .cost-card h3 { margin:0 0 4px; font-size:15px; }
+  .cost-card .sub { color:var(--muted); font-size:12px; margin-bottom:12px; }
+  .cost-card table { width:100%; border-collapse:collapse; font-size:13px;
+                     font-variant-numeric:tabular-nums; }
+  .cost-card td { padding:4px 0; }
+  .cost-card td.r { text-align:right; }
+  .cost-card tr.total td { border-top:1px solid var(--line); padding-top:8px;
+                           font-weight:600; }
+  .cost-card .foot { display:flex; justify-content:space-between; align-items:center;
+                     margin-top:12px; color:var(--muted); font-size:12px; }
+  .cost-card .foot button { padding:6px 12px; background:#3a3f4b; }
+
+  footer { border-top:1px solid var(--line); padding:14px 20px; display:flex;
+           gap:12px; align-items:center; }
+  button { font:inherit; border:none; border-radius:10px; padding:11px 16px;
+           cursor:pointer; color:#fff; }
+  button:disabled { opacity:.4; cursor:not-allowed; }
+  #start { background:var(--ok); }
+  #end { background:var(--danger); }
+  #copy { background:#3a3f4b; }
+  #talk { flex:1; background:var(--advisor); font-weight:600; padding:16px;
+          user-select:none; touch-action:none; }
+  #talk.active { background:var(--ok); }
+  #talk.idle { background:#3a3f4b; }
+
+  #banner { display:none; background:var(--danger); color:#fff; padding:10px 20px;
+            align-items:center; justify-content:space-between; gap:12px; }
+  #banner.show { display:flex; }
+  #banner button { background:rgba(0,0,0,.25); padding:7px 14px; }
+
+  #devbar { display:flex; align-items:center; gap:10px; padding:10px 20px;
+            border-bottom:1px solid var(--line); font-size:13px; color:var(--muted); }
+  #devbar select { font:inherit; background:#12151a; color:var(--text);
+                   border:1px solid var(--line); border-radius:8px; padding:7px 10px;
+                   max-width:340px; }
+  #devbar #micActive { margin-left:auto; }
+</style>
+
+<header>
+  <div class="who" id="who">Customer <small id="status">Not connected</small></div>
+  <div id="timer">5:00</div>
+</header>
+
+<div id="devbar">
+  <label for="micSelect">🎤 Microphone</label>
+  <select id="micSelect"><option>Loading…</option></select>
+  <span id="micActive">—</span>
+</div>
+
+<div id="banner">
+  <span id="bannerMsg">Something went wrong.</span>
+  <button id="restart">Restart Call</button>
+</div>
+
+<div id="transcript">
+  <div class="empty" id="empty">Click <b>Start Call</b> to begin. The customer will
+    greet you first — then hold the mic button (or the Space bar) to speak.</div>
+</div>
+
+<footer>
+  <button id="start">Start Call</button>
+  <button id="talk" class="idle" disabled>Hold to Talk (Space)</button>
+  <button id="end" disabled>End Call</button>
+  <button id="copy" disabled>Copy</button>
+</footer>
+
+<script type="module">
+import { PipecatClient, RTVIEvent } from "@pipecat-ai/client-js";
+import { SmallWebRTCTransport } from "@pipecat-ai/small-webrtc-transport";
+
+const WEBRTC_URL = "http://localhost:7860/api/offer";
+const PERSONA_NAME = "Ramesh Kulkarni";      // V1: one persona (hardcoded label)
+const MAX_CALL_SECONDS = 300;                // must match bot.py MAX_CALL_SECONDS
+
+const $ = (id) => document.getElementById(id);
+const elTranscript = $("transcript"), elEmpty = $("empty"), elStatus = $("status"),
+      elTimer = $("timer"), elWho = $("who");
+const btnStart = $("start"), btnTalk = $("talk"), btnEnd = $("end"), btnCopy = $("copy");
+const elBanner = $("banner"), elBannerMsg = $("bannerMsg"), btnRestart = $("restart");
+const micSelect = $("micSelect"), micActive = $("micActive");
+
+function showBanner(msg) {
+  elBannerMsg.textContent = msg;
+  elBanner.classList.add("show");
+}
+btnRestart.addEventListener("click", () => location.reload());
+
+let pc = null, inCall = false, lastSpeaker = null, lastTextEl = null,
+    timerId = null, remaining = MAX_CALL_SECONDS, botAudioEl = null;
+// STT is billed on speech actually sent, so we measure real mic-hold time on
+// the client (more accurate than the server's stream-duration metric).
+let holdMs = 0, holdStart = 0, talking = false;
+let selectedMicId = null;   // deviceId of the mic the advisor chose
+
+function setStatus(s) { elStatus.textContent = s; }
+
+function fmt(s) { const m = Math.floor(s/60); const ss = String(s%60).padStart(2,"0");
+                  return `${m}:${ss}`; }
+
+function startTimer() {
+  remaining = MAX_CALL_SECONDS; elTimer.textContent = fmt(remaining);
+  elTimer.classList.remove("warning");
+  timerId = setInterval(() => {
+    remaining = Math.max(0, remaining - 1);
+    elTimer.textContent = fmt(remaining);
+    if (remaining <= 60) elTimer.classList.add("warning");
+    if (remaining === 0) clearInterval(timerId);   // server enforces the real cap
+  }, 1000);
+}
+function stopTimer() { if (timerId) clearInterval(timerId); timerId = null; }
+
+function addLine(speaker, text) {
+  if (!text) return;
+  if (elEmpty) { elEmpty.remove(); }
+  if (lastSpeaker === speaker && lastTextEl) {
+    lastTextEl.textContent += (lastTextEl.textContent ? " " : "") + text.trim();
+  } else {
+    const b = document.createElement("div");
+    b.className = "bubble " + speaker;
+    const tag = document.createElement("span"); tag.className = "tag";
+    tag.textContent = speaker === "advisor" ? "You (advisor)" : PERSONA_NAME;
+    const t = document.createElement("span"); t.textContent = text.trim();
+    b.appendChild(tag); b.appendChild(t);
+    elTranscript.appendChild(b);
+    lastSpeaker = speaker; lastTextEl = t;
+  }
+  elTranscript.scrollTop = elTranscript.scrollHeight;
+}
+
+// ---- push to talk -------------------------------------------------------
+function talk(on) {
+  if (!inCall || !pc) return;
+  if (on === talking) return;          // ignore duplicate pointer/key events
+  talking = on;
+  pc.enableMic(on);
+  if (on) { holdStart = performance.now(); }
+  else if (holdStart) { holdMs += performance.now() - holdStart; holdStart = 0; }
+  btnTalk.classList.toggle("active", on);
+  btnTalk.classList.toggle("idle", !on);
+  setStatus(on ? "Listening…" : "Hold to talk when ready");
+}
+btnTalk.addEventListener("pointerdown", (e) => { e.preventDefault(); talk(true); });
+btnTalk.addEventListener("pointerup",   () => talk(false));
+btnTalk.addEventListener("pointerleave",() => talk(false));
+document.addEventListener("keydown", (e) => {
+  if (e.code === "Space" && !e.repeat && inCall) { e.preventDefault(); talk(true); }
+});
+document.addEventListener("keyup", (e) => {
+  if (e.code === "Space" && inCall) { e.preventDefault(); talk(false); }
+});
+
+// ---- client + microphone selection --------------------------------------
+function buildClient() {
+  return new PipecatClient({
+    transport: new SmallWebRTCTransport(),
+    enableMic: true,     // capture locally so we can enumerate + get labels…
+    enableCam: false,
+    callbacks: {
+      onBotReady: () => {
+        inCall = true;
+        pc.enableMic(false);            // …then mute until push-to-talk
+        btnTalk.disabled = false; btnEnd.disabled = false; btnCopy.disabled = false;
+        micSelect.disabled = false;     // can still switch device mid-call
+        setStatus("Connected — hold to talk when ready");
+        startTimer();
+      },
+      onUserTranscript: (d) => { if (d && d.final) addLine("advisor", d.text); },
+      onBotTtsText: (d) => { if (d && d.text) addLine("customer", d.text); },
+      onDisconnected: () => endedUI(),
+      onError: (m) => {
+        console.error("RTVI error", m);
+        setStatus("Error — see console");
+        const fatal = m && m.data && m.data.fatal;
+        if (fatal) showBanner("The call hit a problem and disconnected.");
+      },
+      onAvailableMicsUpdated: () => populateMics(),   // hot-plug a headset/USB mic
+      onMicUpdated: () => syncActiveMic(),
+      onTrackStarted: (track, participant) => {
+        if (track.kind !== "audio") return;
+        if (participant && participant.local) return;   // ignore our own mic
+        if (!botAudioEl) {
+          botAudioEl = document.createElement("audio");
+          botAudioEl.autoplay = true; document.body.appendChild(botAudioEl);
+        }
+        botAudioEl.srcObject = new MediaStream([track]);
+      },
+    },
+  });
+}
+
+async function populateMics() {
+  let mics = [];
+  try { mics = await pc.getAllMics(); } catch (e) { /* permission not granted yet */ }
+  mics = mics.filter((m) => m.deviceId);
+  micSelect.innerHTML = "";
+  mics.forEach((m, i) => {
+    const opt = document.createElement("option");
+    opt.value = m.deviceId;
+    opt.textContent = m.label || ("Microphone " + (i + 1));
+    micSelect.appendChild(opt);
+  });
+  if (selectedMicId && mics.some((m) => m.deviceId === selectedMicId)) {
+    micSelect.value = selectedMicId;
+  } else if (pc.selectedMic && pc.selectedMic.deviceId) {
+    micSelect.value = pc.selectedMic.deviceId;
+    selectedMicId = pc.selectedMic.deviceId;
+  }
+  micSelect.disabled = mics.length === 0;
+  syncActiveMic();
+}
+
+function syncActiveMic() {
+  if (!micSelect.options.length) { micActive.textContent = "No microphone found"; return; }
+  const opt = micSelect.selectedOptions[0];
+  micActive.textContent = "Using: " + (opt ? opt.textContent : "default");
+}
+
+micSelect.addEventListener("change", () => {
+  selectedMicId = micSelect.value;
+  if (pc) pc.updateMic(selectedMicId);   // switch device — only this mic is sent
+  syncActiveMic();
+});
+
+async function initDevices() {
+  pc = buildClient();
+  try {
+    await pc.initDevices();               // prompts mic permission → real labels
+  } catch (e) {
+    console.warn("device init failed", e);
+    setStatus("Allow microphone access to pick a device");
+  }
+  await populateMics();
+}
+
+// ---- call lifecycle -----------------------------------------------------
+async function startCall() {
+  if (!pc) pc = buildClient();
+  btnStart.disabled = true; setStatus("Connecting…");
+  holdMs = 0; holdStart = 0; talking = false;
+  elWho.firstChild.textContent = PERSONA_NAME + " ";
+  if (selectedMicId) { try { pc.updateMic(selectedMicId); } catch (e) {} }
+
+  try {
+    await pc.connect({ webrtcUrl: WEBRTC_URL });
+  } catch (err) {
+    console.error(err);
+    setStatus("Could not connect — is bot.py running?");
+    showBanner("Couldn't reach the bot. Make sure bot.py is running, then restart.");
+    btnStart.disabled = false;
+  }
+}
+
+async function endCall() {
+  if (!confirm("End the call? This finishes the exercise.")) return;
+  setStatus("Ending…");
+  try { await pc.disconnect(); } catch (e) { console.error(e); }
+}
+
+function endedUI() {
+  inCall = false; stopTimer();
+  btnTalk.disabled = true; btnEnd.disabled = true;
+  btnTalk.classList.remove("active"); btnTalk.classList.add("idle");
+  btnStart.disabled = false;
+  setStatus("Call ended — transcript saved on the server");
+  showCostCard();
+}
+
+// Fetch the session the server just wrote and render the cost card. The file
+// is written during the server's disconnect handling, so retry briefly.
+async function showCostCard(attempt = 0) {
+  try {
+    const r = await fetch("transcripts/latest.json?t=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) throw new Error("not ready");
+    const data = await r.json();
+    renderCostCard(data);
+  } catch (e) {
+    if (attempt < 6) return setTimeout(() => showCostCard(attempt + 1), 400);
+    console.warn("cost summary unavailable", e);
+  }
+}
+
+async function renderCostCard(data) {
+  const u = data.usage_summary || {};
+  const c = u.cost_inr || {};
+  const rupee = (n) => "₹" + (Number(n) || 0).toFixed(2);
+  const elapsed = fmt(Math.round(u.elapsed_seconds || 0));
+  const turns = u.turns || 0;
+  const cachePct = Math.round((u.cache_hit_rate || 0) * 100);
+  const reason = (data.end_reason || "").replace(/_/g, " ");
+
+  // STT from client mic-hold time (matches what Sarvam bills far better than
+  // the server's stream-duration metric). TTS + LLM come from the server.
+  const holdSeconds = holdMs / 1000;
+  let sttRate = 0.5; // ₹/min fallback
+  try {
+    const rr = await (await fetch("rates.json?t=" + Date.now(), { cache: "no-store" })).json();
+    sttRate = rr.stt.rate;
+  } catch (e) { /* use fallback */ }
+  const sttCost = (holdSeconds / 60) * sttRate;
+  const total = sttCost + (c.tts || 0) + (c.llm || 0);
+  const perTurn = turns ? (total / turns) : 0;
+
+  const card = document.createElement("div");
+  card.className = "cost-card";
+  card.innerHTML = `
+    <h3>Call complete</h3>
+    <div class="sub">${elapsed} · ${turns} turns · ${reason}</div>
+    <table>
+      <tr><td>Speech-to-text <small style="opacity:.6">(mic-hold)</small></td><td class="r">${holdSeconds.toFixed(0)} s</td><td class="r">${rupee(sttCost)}</td></tr>
+      <tr><td>Text-to-speech</td><td class="r">${u.tts_chars||0} chars</td><td class="r">${rupee(c.tts)}</td></tr>
+      <tr><td>LLM (in/out)</td><td class="r">${(u.llm_input_fresh_tokens||0)+(u.llm_input_cached_tokens||0)} / ${u.llm_output_tokens||0} tok</td><td class="r">${rupee(c.llm)}</td></tr>
+      <tr class="total"><td>Total (estimate)</td><td></td><td class="r">${rupee(total)}</td></tr>
+    </table>
+    <div class="foot">
+      <span>Cache hit ${cachePct}% · ${rupee(perTurn)} per turn</span>
+      <button id="copyCost">Copy</button>
+    </div>`;
+  elTranscript.appendChild(card);
+  elTranscript.scrollTop = elTranscript.scrollHeight;
+
+  card.querySelector("#copyCost").addEventListener("click", () => {
+    const txt = `Call complete · ${elapsed} · ${turns} turns · ${reason}\n`
+      + `STT ${holdSeconds.toFixed(0)}s ${rupee(sttCost)}\n`
+      + `TTS ${u.tts_chars||0} chars ${rupee(c.tts)}\n`
+      + `LLM ${rupee(c.llm)}\n`
+      + `Total ${rupee(total)}\n`
+      + `Cache hit ${cachePct}% · ${rupee(perTurn)} per turn`;
+    navigator.clipboard.writeText(txt).then(() => setStatus("Cost summary copied"));
+  });
+}
+
+btnStart.addEventListener("click", startCall);
+btnEnd.addEventListener("click", endCall);
+btnCopy.addEventListener("click", () => {
+  const text = [...elTranscript.querySelectorAll(".bubble")].map((b) => {
+    const who = b.classList.contains("advisor") ? "Advisor" : PERSONA_NAME;
+    return `${who}: ${b.querySelector("span:last-child").textContent}`;
+  }).join("\n");
+  navigator.clipboard.writeText(text).then(() => setStatus("Transcript copied"));
+});
+
+// Enumerate microphones on load so the advisor can pick a device before calling.
+initDevices();
+</script>

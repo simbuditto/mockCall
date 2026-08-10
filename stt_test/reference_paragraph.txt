@@ -1,0 +1,29 @@
+STT ACCENT & VOCABULARY TEST — read this aloud, naturally, at your normal pace.
+Keep each recording under 30 seconds (that's the REST limit). If you run long,
+split into two clips. Record yourself and, if possible, one or two colleagues in
+their real accents — not a careful studio voice.
+
+------------------------------------------------------------------------------
+READ THIS PARAGRAPH:
+
+"Sir, for a fifteen-year term plan the sum assured is one point two crore, and
+the premium paying term is fifteen years. There's also an endowment option and a
+ULIP, but with your thirty-eight thousand rupee EMI running, a plain term plan is
+cheaper. You can add a critical illness rider. Please add your wife as the
+nominee. If you miss a payment the policy can lapse, and you lose the maturity
+benefit. All of this is regulated by IRDAI. Your employer cover is only twelve
+lakh, which is low."
+------------------------------------------------------------------------------
+
+WHAT WE'RE CHECKING (numbers + jargon only — general word errors don't matter):
+
+  Numbers:   1.2 crore · 15-year / fifteen years · ₹38,000 EMI · ₹12 lakh
+  Jargon:    sum assured · premium paying term · endowment · ULIP · rider ·
+             nominee · lapse · maturity benefit · IRDAI · term plan
+
+After recording, save the .wav (or .mp3) files into this stt_test/ folder and run:
+
+    python stt_test/run_stt_check.py stt_test/*.wav
+
+The script transcribes each clip with Saaras v3 and scores whether these terms
+survived. Every miss goes into the STT `prompt` string used in Step 5.

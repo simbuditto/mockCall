@@ -1,0 +1,11 @@
+{
+  "currency": "INR",
+  "usd_to_inr": 88.0,
+  "stt":  { "unit": "per_minute",    "rate": 0.50,  "model": "saaras:v3" },
+  "tts":  { "unit": "per_10k_chars", "rate": 30.00, "model": "bulbul:v3" },
+  "llm":  { "unit": "per_mtok_usd",  "model": "claude-haiku-4-5-20251001",
+            "input": 1.00, "output": 5.00, "cache_read": 0.10, "cache_write": 1.25 },
+  "verified_on": "2026-08-10",
+  "source": ["docs.sarvam.ai/api/getting-started/pricing", "anthropic.com/pricing"],
+  "_note": "STT corrected 2026-08-10: Sarvam Saaras v3 is Rs30/hour = Rs0.50/min (plan had Rs1.50). TTS Bulbul v3 Rs30/10K chars and Haiku 4.5 $1/$5/$0.10/$1.25 confirmed current. Re-check on rate changes."
+}
