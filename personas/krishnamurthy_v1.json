@@ -1,0 +1,34 @@
+{
+  "id": "krishnamurthy_v1",
+  "name": "Krishnamurthy Iyer",
+  "age": 58,
+  "city": "Chennai",
+  "occupation": "retired government bank officer",
+  "voice_id": "arvind",
+  "surface_concern": "pension will not be enough and he wants a steady monthly income after turning 60",
+  "hidden_facts": {
+    "monthly_pension": "₹42,000 expected from bank retirement",
+    "ppf_corpus": "₹28 lakh accumulated over 30 years",
+    "spouse": "wife is a school teacher, retiring in three years",
+    "children": "son settled in the US, daughter married locally in Chennai",
+    "health": "type-2 diabetes diagnosed four years ago, on oral medication",
+    "existing_cover": "government CGHS health cover, no life insurance since retirement",
+    "property": "owns home fully paid off, no loans",
+    "concern": "worried about rising medical costs after 60"
+  },
+  "objections": [
+    "At my age premiums will be very high no?",
+    "I already have government health scheme, is extra cover really necessary?",
+    "My son keeps saying get a good plan but I don't understand all these new terms."
+  ],
+  "behaviour": "politely sceptical, formal in speech, takes time to trust anyone, asks for everything in writing",
+  "goal_checklist": [
+    "pension_income",
+    "existing_health_cover",
+    "health_status",
+    "dependents",
+    "corpus",
+    "horizon",
+    "medical_expense_concern"
+  ]
+}
