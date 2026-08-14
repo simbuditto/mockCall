@@ -44,33 +44,30 @@ This is why there is no `audio_chunk` entry below, unlike the original sketch.
 ## client → server
 
 ```jsonc
-// The `persona_id` is not an app-event message — it's threaded through the
-// WebRTC offer's requestData, so the bot has the right persona loaded before
-// the pipeline even starts. See "Persona selection" below.
 { "type": "end_session" }                                 // advisor clicks End Call
 ```
 
-## Persona selection
+## Persona selection (per-port routing)
 
-The browser picks one of the five customer profiles (see `profiles.json`) on
-the landing page. That `persona_id` is sent to the bot at connect time via the
-Pipecat client's `webrtcRequestParams.requestData`:
+The SmallWebRTC JS client's `connect()` accepts **only** a `webrtcUrl` — there is
+no supported way to attach custom data (like a `persona_id`) to the WebRTC offer.
+So persona selection is done by **routing to a different bot per persona**, each
+running on its own port:
+
+- Each persona runs its own `bot.py` process with `PERSONA_PATH` set to that
+  persona file, on a dedicated port (see `run_bots.sh` and the `port` field in
+  `profiles.json`): ramesh 7860, priya 7861, vikram 7862, krishnamurthy 7863,
+  suresh 7864.
+- The landing page reads `profiles.json`; when the advisor picks a profile the
+  browser connects to that profile's port:
 
 ```js
-await pc.connect({
-  webrtcRequestParams: {
-    endpoint: "http://localhost:7860/api/offer",
-    requestData: { persona_id: "ramesh_v1" }
-  },
-});
+await pc.connect({ webrtcUrl: `http://localhost:${profile.port}/api/offer` });
 ```
 
-The Pipecat runner surfaces that payload on `runner_args.body`. `bot.py`
-resolves it to a file under `personas/` (whitelist-checked to block path
-traversal) and falls back to the `PERSONA_PATH` env var when the id is
-missing, malformed, or unknown — so raw `curl` calls and older clients keep
-working. The persona load happens once per session, before the pipeline is
-built.
+`bot.py` still supports a `persona_id` in `runner_args.body` (whitelisted, with a
+`PERSONA_PATH` fallback) for future single-process routing via the RTVI `/start`
+endpoint, but the working V1 mechanism is per-port.
 
 ## Notes
 

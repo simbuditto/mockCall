@@ -161,12 +161,12 @@ async def bot(runner_args: RunnerArguments):
     )
 
     # --- Text to speech: Sarvam Bulbul v3, voice from the persona file ---
+    # NOTE: the kwarg is `voice_id`, not `speaker` — passing `speaker` is silently
+    # ignored and TTS falls back to the default voice for every persona.
     tts = SarvamTTSService(
         api_key=os.getenv("SARVAM_API_KEY"),
-        language_code="en-IN",
         model="bulbul:v3",
-        speaker=persona.get("voice_id", "rahul"),
-        pace=1.0,
+        voice_id=persona.get("voice_id", "rahul"),
     )
 
     messages = [

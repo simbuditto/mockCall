@@ -5,6 +5,7 @@
     "age": 26,
     "city": "Bengaluru",
     "occupation": "software engineer",
+    "port": 7861,
     "summary": "Young single earner who just lost her employer health cover; curious but cost-sensitive."
   },
   {
@@ -13,6 +14,7 @@
     "age": 34,
     "city": "Pune",
     "occupation": "IT services, mid-level",
+    "port": 7860,
     "summary": "Family breadwinner chasing a tax-saver in March; running a big home-loan EMI."
   },
   {
@@ -21,6 +23,7 @@
     "age": 45,
     "city": "Mumbai",
     "occupation": "real estate developer",
+    "port": 7862,
     "summary": "High-net-worth builder with a CA on speed-dial; wants ₹-crore-scale protection, hates fluff."
   },
   {
@@ -29,6 +32,7 @@
     "age": 58,
     "city": "Chennai",
     "occupation": "retired bank officer",
+    "port": 7863,
     "summary": "Near-retirement, worried about medical costs and a pension that won't stretch."
   },
   {
@@ -37,6 +41,7 @@
     "age": 39,
     "city": "Nagpur",
     "occupation": "hardware shop owner",
+    "port": 7864,
     "summary": "Hardened sceptic — lost money to a mis-sold endowment, distrusts every agent."
   }
 ]

@@ -179,7 +179,10 @@
 import { PipecatClient, RTVIEvent } from "@pipecat-ai/client-js";
 import { SmallWebRTCTransport } from "@pipecat-ai/small-webrtc-transport";
 
-const WEBRTC_URL = "http://localhost:7860/api/offer";
+// Each persona's bot runs on its own port (see profiles.json). We connect to the
+// port for the chosen profile — the SmallWebRTC client only accepts a webrtcUrl,
+// so per-port is how we route to the right customer.
+const BOT_HOST = "http://localhost";
 const MAX_CALL_SECONDS = 300;                // must match bot.py MAX_CALL_SECONDS
 
 const $ = (id) => document.getElementById(id);
@@ -435,17 +438,13 @@ async function startCall() {
   if (!elEmpty.parentNode) { elTranscript.prepend(elEmpty); }
   if (selectedMicId) { try { pc.updateMic(selectedMicId); } catch (e) {} }
 
+  const port = selectedProfile.port || 7860;
   try {
-    await pc.connect({
-      webrtcRequestParams: {
-        endpoint: WEBRTC_URL,
-        requestData: { persona_id: selectedProfile.id },
-      },
-    });
+    await pc.connect({ webrtcUrl: `${BOT_HOST}:${port}/api/offer` });
   } catch (err) {
     console.error(err);
-    setStatus("Could not connect — is bot.py running?");
-    showBanner("Couldn't reach the bot. Make sure bot.py is running, then restart.");
+    setStatus(`Could not connect — is the bot for ${selectedProfile.name} running on port ${port}?`);
+    showBanner("Couldn't reach the bot. Run ./run_bots.sh (all personas), then restart.");
     btnStart.disabled = false;
   }
 }

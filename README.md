@@ -91,12 +91,17 @@ python -c "from pipecat.services.sarvam.stt import SarvamSTTService; print('ok')
 Two terminals from the project root, with the venv active in both.
 
 ```bash
-# Terminal 1 — the bot (WebRTC signaling on :7860)
-python bot.py
+# Terminal 1 — one bot per persona, each on its own port (see profiles.json)
+./run_bots.sh
 
 # Terminal 2 — serve the frontend (localhost is a secure context, so mic works)
 python -m http.server 8000
 ```
+
+Each persona runs its own `bot.py` (ramesh 7860, priya 7861, vikram 7862,
+krishnamurthy 7863, suresh 7864); the landing page routes the chosen customer to
+the matching port. To run a single persona for quick testing:
+`PERSONA_PATH=personas/priya_v1.json python bot.py --port 7861`.
 
 Open **http://localhost:8000/** and walk the three pre-call stages:
 
