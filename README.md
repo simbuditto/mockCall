@@ -128,14 +128,18 @@ Config knobs (via `.env` or inline): `MAX_CALL_SECONDS`, `PERSONA_PATH`
 ## How it works
 
 - **Personas as data.** `personas/*.json` holds each customer's surface concern,
-  hidden facts, objections, and a 6–8 item goal checklist. `persona.py` renders
-  the chosen one into a system prompt whose core rule is *reveal a hidden fact
-  only when the advisor asks a question that would surface it.* The landing
-  page reads `profiles.json` to list the available customers; the browser sends
-  the picked `persona_id` at connect time (see `contract.md`) and `bot.py`
-  loads it before the pipeline starts.
+  hidden facts, objections, a 6–8 item goal checklist, and a `voice_id`.
+  `persona.py` renders the chosen one into a system prompt whose core rule is
+  *reveal a hidden fact only when the advisor asks a question that would surface
+  it.*
+- **Profile routing (per-port).** The landing page reads `profiles.json` to list
+  the five customers. Because the SmallWebRTC client can only be handed a
+  `webrtcUrl`, each persona runs its **own `bot.py` on a dedicated port** (via
+  `run_bots.sh`), and the browser connects to the chosen persona's port. See
+  `contract.md`.
 - **The pipeline.** `bot.py` wires Sarvam STT → Claude Haiku (persona, prompt
-  caching on, short-answer cap) → Sarvam TTS over Pipecat's WebRTC transport.
+  caching on, short-answer cap) → Sarvam TTS (`voice_id` = the persona's Bulbul v3
+  speaker) over Pipecat's WebRTC transport.
 - **Usage metering.** `usage.py` reads Pipecat's metrics frames from an observer
   and prices them from `rates.json`. Input tokens are split into fresh / cached /
   cache-write so the LLM isn't mis-costed. STT is measured as client mic-hold
@@ -215,6 +219,35 @@ step had an acceptance test.
 Automatic goal-detection & auto-end · scoring rubric · post-call feedback pass ·
 persona library · trainer dashboard · shared transcript format for live-call QA
 automation. Each extends the existing building blocks — none needs a rewrite.
+
+---
+
+## Version history
+
+**v1.1 — Multi-persona + guided pre-call flow** (`feature/automation`, Aug 2026)
+- **Five customer profiles** chosen on a landing page — Priya (young single earner),
+  Ramesh (family breadwinner), Vikram (HNI), Krishnamurthy (near-retirement), and
+  Suresh (hardened sceptic) — each authored as data in `personas/*.json`.
+- **Microphone selection now happens before the session**, with an explicit
+  *Confirm microphone* step; Start Call stays disabled until it's confirmed.
+- **Session stats are shown only on request** — the cost card no longer appears
+  automatically at call end; a **Show session stats** button reveals it.
+- **Per-port persona routing** (`run_bots.sh`): one `bot.py` per persona on its own
+  port, replacing an earlier attempt to pass `persona_id` through the WebRTC offer
+  (which the SmallWebRTC client silently ignores).
+- **Voice fix:** TTS now uses the `voice_id` kwarg (the previous `speaker=` was
+  ignored, so every persona spoke in the default voice); each persona has a
+  distinct, validated Bulbul v3 speaker.
+- **Automation harness:** `TASKS.md` (spec), `scripts/verify.sh` (the checks gate,
+  now including voice-ID validation), `CLAUDE.md`, and a GitHub Actions workflow.
+
+**v1.0 — Working prototype** (`main`, Aug 2026)
+- Single customer (Ramesh) spoken mock call end-to-end in the browser: Sarvam STT →
+  Claude Haiku persona → Sarvam TTS over WebRTC, push-to-talk.
+- Manual End plus a 5-minute cap; per-call transcript + goal checklist saved to disk.
+- Usage metering priced from `rates.json`, validated against vendor dashboards
+  (caught and fixed a 3× STT rate error; STT measured as mic-hold time).
+- Two-page cost/capability proposal (`In-House_Mock_Call_Proposal.pdf`).
 
 ---
 
