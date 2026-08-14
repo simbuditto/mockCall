@@ -20,7 +20,7 @@ from sarvamai import SarvamAI
 load_dotenv()
 
 FALLBACK_LINE = "Sorry, I couldn't hear you. Can you please repeat that?"
-PERSONA_PATH = os.getenv("PERSONA_PATH", "personas/ramesh_v1.json")
+PERSONA_PATH = os.getenv("PERSONA_PATH", "personas/rohan_v1.json")
 
 
 def main():

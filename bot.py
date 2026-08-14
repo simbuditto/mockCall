@@ -46,7 +46,7 @@ from persistence import save_session
 
 load_dotenv(override=True)
 
-PERSONA_PATH = os.getenv("PERSONA_PATH", "personas/ramesh_v1.json")
+PERSONA_PATH = os.getenv("PERSONA_PATH", "personas/rohan_v1.json")
 PERSONAS_DIR = os.getenv("PERSONAS_DIR", "personas")
 # 5-minute hard cap as a backstop against a forgotten open session (config, not
 # inline — you'll want to change it; see the note in the plan's Reference section).
@@ -57,7 +57,7 @@ def _resolve_persona_path(persona_id: str | None) -> str:
     """Map a client-supplied persona_id to a persona file inside PERSONAS_DIR.
 
     Falls back to PERSONA_PATH when the id is missing, malformed, or unknown.
-    Guards against path traversal — only bare ids like "ramesh_v1" are accepted.
+    Guards against path traversal — only bare ids like "rohan_v1" are accepted.
     """
     if not persona_id or not isinstance(persona_id, str):
         return PERSONA_PATH
@@ -89,7 +89,7 @@ def _message_text(content) -> str:
 
 def build_transcript(context) -> list:
     """Turn the LLM context into a role-labelled transcript. user -> advisor
-    (the trainee at the mic), assistant -> customer (Ramesh). System messages
+    (the trainee at the mic), assistant -> customer (the persona). System messages
     are skipped."""
     lines = []
     for m in context.get_messages():
