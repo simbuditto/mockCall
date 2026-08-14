@@ -47,9 +47,29 @@ from persistence import save_session
 load_dotenv(override=True)
 
 PERSONA_PATH = os.getenv("PERSONA_PATH", "personas/ramesh_v1.json")
+PERSONAS_DIR = os.getenv("PERSONAS_DIR", "personas")
 # 5-minute hard cap as a backstop against a forgotten open session (config, not
 # inline — you'll want to change it; see the note in the plan's Reference section).
 MAX_CALL_SECONDS = int(os.getenv("MAX_CALL_SECONDS", "300"))
+
+
+def _resolve_persona_path(persona_id: str | None) -> str:
+    """Map a client-supplied persona_id to a persona file inside PERSONAS_DIR.
+
+    Falls back to PERSONA_PATH when the id is missing, malformed, or unknown.
+    Guards against path traversal — only bare ids like "ramesh_v1" are accepted.
+    """
+    if not persona_id or not isinstance(persona_id, str):
+        return PERSONA_PATH
+    # Bare-id whitelist: letters, digits, underscore, hyphen. No slashes, no dots.
+    if not persona_id.replace("_", "").replace("-", "").isalnum():
+        logger.warning(f"Rejecting suspicious persona_id: {persona_id!r}")
+        return PERSONA_PATH
+    candidate = os.path.join(PERSONAS_DIR, f"{persona_id}.json")
+    if os.path.isfile(candidate):
+        return candidate
+    logger.warning(f"Unknown persona_id {persona_id!r}, falling back to {PERSONA_PATH}")
+    return PERSONA_PATH
 
 
 def _message_text(content) -> str:
@@ -118,9 +138,15 @@ async def bot(runner_args: RunnerArguments):
     )
 
     # --- Persona: load the customer Claude will play ---
-    persona = load_persona(PERSONA_PATH)
+    # The browser passes the chosen persona_id via SmallWebRTCRequest.requestData,
+    # which the runner surfaces as runner_args.body. Absent/invalid ids fall back
+    # to PERSONA_PATH so the server still works from a raw curl or older client.
+    body = getattr(runner_args, "body", None) or {}
+    persona_id = body.get("persona_id") if isinstance(body, dict) else None
+    persona_path = _resolve_persona_path(persona_id)
+    persona = load_persona(persona_path)
     system_prompt = render_system_prompt(persona)
-    logger.info(f"Loaded persona: {persona['name']} ({persona['id']})")
+    logger.info(f"Loaded persona: {persona['name']} ({persona['id']}) from {persona_path}")
 
     # --- LLM: Claude Haiku 4.5, persona-driven, prompt caching on ---
     llm = AnthropicLLMService(

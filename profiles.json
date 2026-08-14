@@ -1,0 +1,42 @@
+[
+  {
+    "id": "priya_v1",
+    "name": "Priya Sharma",
+    "age": 26,
+    "city": "Bengaluru",
+    "occupation": "software engineer",
+    "summary": "Young single earner who just lost her employer health cover; curious but cost-sensitive."
+  },
+  {
+    "id": "ramesh_v1",
+    "name": "Ramesh Kulkarni",
+    "age": 34,
+    "city": "Pune",
+    "occupation": "IT services, mid-level",
+    "summary": "Family breadwinner chasing a tax-saver in March; running a big home-loan EMI."
+  },
+  {
+    "id": "vikram_v1",
+    "name": "Vikram Singhania",
+    "age": 45,
+    "city": "Mumbai",
+    "occupation": "real estate developer",
+    "summary": "High-net-worth builder with a CA on speed-dial; wants ₹-crore-scale protection, hates fluff."
+  },
+  {
+    "id": "krishnamurthy_v1",
+    "name": "Krishnamurthy Iyer",
+    "age": 58,
+    "city": "Chennai",
+    "occupation": "retired bank officer",
+    "summary": "Near-retirement, worried about medical costs and a pension that won't stretch."
+  },
+  {
+    "id": "suresh_v1",
+    "name": "Suresh Gadge",
+    "age": 39,
+    "city": "Nagpur",
+    "occupation": "hardware shop owner",
+    "summary": "Hardened sceptic — lost money to a mis-sold endowment, distrusts every agent."
+  }
+]
