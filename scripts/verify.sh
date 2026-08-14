@@ -26,8 +26,8 @@ for f in glob.glob("personas/*.json"):
     json.load(open(f))
 PY
 
-echo "[3/6] At least 5 personas, complete, renderable, valid Bulbul v3 voice"
-if python3 - <<'PY' 2>/tmp/persona.log; then pass "5+ personas render, voices valid"; else err "persona check failed:"; cat /tmp/persona.log; fi
+echo "[3/6] At least 3 personas, complete, renderable, valid Bulbul v3 voice"
+if python3 - <<'PY' 2>/tmp/persona.log; then pass "3+ personas render, voices valid"; else err "persona check failed:"; cat /tmp/persona.log; fi
 import glob, json, sys
 import persona
 REQ = {"id","name","age","city","occupation","voice_id","surface_concern",
@@ -37,7 +37,7 @@ V3 = {"aditya","ritu","priya","neha","rahul","pooja","rohan","simran","kavya",
       "amit","dev","ishita","shreya","ratan","varun","manan","sumit","roopa",
       "kabir","aayan","shubh","ashutosh","advait","amelia","sophia"}
 files = glob.glob("personas/*.json")
-assert len(files) >= 5, f"need >=5 personas, found {len(files)}"
+assert len(files) >= 3, f"need >=3 personas, found {len(files)}"
 for f in files:
     p = json.load(open(f))
     missing = REQ - set(p)

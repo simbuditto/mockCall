@@ -1,47 +1,29 @@
 [
   {
-    "id": "priya_v1",
-    "name": "Priya Sharma",
-    "age": 26,
-    "city": "Bengaluru",
-    "occupation": "software engineer",
-    "port": 7861,
-    "summary": "Young single earner who just lost her employer health cover; curious but cost-sensitive."
-  },
-  {
-    "id": "ramesh_v1",
-    "name": "Ramesh Kulkarni",
-    "age": 34,
-    "city": "Pune",
-    "occupation": "IT services, mid-level",
+    "id": "rohan_v1",
+    "name": "Rohan Mehra",
+    "age": 31,
+    "city": "Gurugram",
+    "occupation": "corporate professional",
     "port": 7860,
-    "summary": "Family breadwinner chasing a tax-saver in March; running a big home-loan EMI."
+    "summary": "Wants a health plan with real wellness/fitness rewards. No PEDs, but a high BMI he's unsure about; chases OPD and check-up benefits."
   },
   {
-    "id": "vikram_v1",
-    "name": "Vikram Singhania",
-    "age": 45,
-    "city": "Mumbai",
-    "occupation": "real estate developer",
-    "port": 7862,
-    "summary": "High-net-worth builder with a CA on speed-dial; wants ₹-crore-scale protection, hates fluff."
-  },
-  {
-    "id": "krishnamurthy_v1",
-    "name": "Krishnamurthy Iyer",
-    "age": 58,
+    "id": "naveen_v1",
+    "name": "Naveen Reddy",
+    "age": 36,
     "city": "Chennai",
-    "occupation": "retired bank officer",
-    "port": 7863,
-    "summary": "Near-retirement, worried about medical costs and a pension that won't stretch."
+    "occupation": "software professional",
+    "port": 7861,
+    "summary": "New father seeking a family floater. The hard part is covering a one-month-old born with a congenital condition; probes phased plans, group cover, super top-ups."
   },
   {
-    "id": "suresh_v1",
-    "name": "Suresh Gadge",
-    "age": 39,
-    "city": "Nagpur",
-    "occupation": "hardware shop owner",
-    "port": 7864,
-    "summary": "Hardened sceptic — lost money to a mis-sold endowment, distrusts every agent."
+    "id": "rajesh_v1",
+    "name": "Rajesh",
+    "age": 34,
+    "city": "Chennai",
+    "occupation": "salaried professional",
+    "port": 7862,
+    "summary": "First-time buyer for self + spouse. Hypothyroid with an old kidney-stone surgery; anxious about premiums, waiting periods and loading."
   }
 ]

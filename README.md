@@ -1,8 +1,8 @@
 # Mock-Call Training Platform
 
 A browser-based voice trainer for insurance advisors. The advisor picks one of
-**five believable AI customers**, confirms a microphone, and then practises a
-discovery conversation. The transcript is saved and the cost breakdown is
+**three believable AI health-insurance customers**, confirms a microphone, and then
+practises a discovery conversation. The transcript is saved and the cost breakdown is
 available on request. Built as a working prototype to prove the pipeline, the
 economics, and the path to a full system.
 
@@ -42,8 +42,7 @@ metering can never add latency.
 | `persistence.py` | Writes the per-call transcript + checklist + usage JSON |
 | `generate_fallback.py` | Pre-renders the "couldn't hear you" WAV in the persona voice |
 | `index.html` | The entire frontend (vanilla JS, Pipecat web client via CDN) |
-| `personas/*.json` | The five customers: surface concern, hidden facts, objections, goal checklist |
-| `personas/ramesh_v1_behaviour.md` | Plain-English behaviour rules behind the prompt |
+| `personas/*.json` | The three customers: surface concern, hidden facts, health profile, scripted lines, triggered questions, goal checklist |
 | `profiles.json` | Landing-page catalogue: id + short summary the frontend renders for the picker |
 | `QA_CHECKLIST.md` | Manual UX checks a human ticks after `scripts/verify.sh` passes |
 | `rates.json` | Auditable per-unit pricing (STT/TTS/LLM) with a `verified_on` date |
@@ -98,14 +97,14 @@ Two terminals from the project root, with the venv active in both.
 python -m http.server 8000
 ```
 
-Each persona runs its own `bot.py` (ramesh 7860, priya 7861, vikram 7862,
-krishnamurthy 7863, suresh 7864); the landing page routes the chosen customer to
-the matching port. To run a single persona for quick testing:
-`PERSONA_PATH=personas/priya_v1.json python bot.py --port 7861`.
+Each persona runs its own `bot.py` (rohan 7860, naveen 7861, rajesh 7862); the
+landing page routes the chosen customer to the matching port. To run a single
+persona for quick testing:
+`PERSONA_PATH=personas/naveen_v1.json python bot.py --port 7861`.
 
 Open **http://localhost:8000/** and walk the three pre-call stages:
 
-1. **Pick a customer** from the five profile cards on the landing page.
+1. **Pick a customer** from the three profile cards on the landing page.
 2. **Confirm your microphone** on the device-setup card (Start Call stays
    disabled until you click *Confirm microphone*).
 3. **Click Start Call.** The chosen customer greets you first; **hold the mic
@@ -117,7 +116,7 @@ the bottom of the transcript to render the ₹ cost card on demand.
 Optional, one-time:
 
 ```bash
-python generate_fallback.py        # renders fallback.wav in Ramesh's voice
+python generate_fallback.py        # renders fallback.wav in Rohan's voice
 ```
 
 Config knobs (via `.env` or inline): `MAX_CALL_SECONDS`, `PERSONA_PATH`
@@ -128,12 +127,15 @@ Config knobs (via `.env` or inline): `MAX_CALL_SECONDS`, `PERSONA_PATH`
 ## How it works
 
 - **Personas as data.** `personas/*.json` holds each customer's surface concern,
-  hidden facts, objections, a 6–8 item goal checklist, and a `voice_id`.
-  `persona.py` renders the chosen one into a system prompt whose core rule is
-  *reveal a hidden fact only when the advisor asks a question that would surface
-  it.*
+  hidden facts, objections, a goal checklist, and a `voice_id`. Health personas
+  add an optional `health_profile`, an `opening_line`, `scripted_lines` (stock
+  answers), `triggered_questions` (the only questions the customer initiates,
+  each on its own trigger), and `scripted_answers` (underwriting lines given only
+  when asked). `persona.py` renders the chosen one into a system prompt whose core
+  rule is *reveal a hidden fact only when the advisor asks a question that would
+  surface it.*
 - **Profile routing (per-port).** The landing page reads `profiles.json` to list
-  the five customers. Because the SmallWebRTC client can only be handed a
+  the three customers. Because the SmallWebRTC client can only be handed a
   `webrtcUrl`, each persona runs its **own `bot.py` on a dedicated port** (via
   `run_bots.sh`), and the browser connects to the chosen persona's port. See
   `contract.md`.
@@ -223,6 +225,22 @@ automation. Each extends the existing building blocks — none needs a rewrite.
 ---
 
 ## Version history
+
+**v1.2 — Health-insurance persona set** (Aug 2026)
+- **Replaced the persona library** with three health-insurance customers drawn
+  from the field-team briefs: **Rohan** (wellness/fitness benefits, no PED but a
+  high BMI), **Naveen** (family floater for a newborn with a congenital
+  condition), and **Rajesh** (first-time buyer for self + spouse, hypothyroid with
+  an old kidney-stone surgery). The earlier life-insurance five were retired.
+- **Richer persona schema.** `persona.py` now renders optional `health_profile`,
+  `opening_line`, `scripted_lines`, `triggered_questions` (customer-initiated
+  questions, each on its trigger condition), and `scripted_answers` (underwriting
+  lines given only when the matching question is asked), on top of the existing
+  fields — so the customer follows the briefs' scripted turns instead of only
+  reacting.
+- **Routing + gate updated:** `profiles.json` and `run_bots.sh` now list three
+  personas (rohan 7860, naveen 7861, rajesh 7862); `scripts/verify.sh` requires
+  three personas (was five).
 
 **v1.1 — Multi-persona + guided pre-call flow** (`feature/automation`, Aug 2026)
 - **Five customer profiles** chosen on a landing page — Priya (young single earner),

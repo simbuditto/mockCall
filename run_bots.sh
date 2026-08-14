@@ -9,11 +9,9 @@ cd "$(dirname "$0")"
 
 # id:port must match profiles.json
 declare -a BOTS=(
-  "personas/ramesh_v1.json:7860"
-  "personas/priya_v1.json:7861"
-  "personas/vikram_v1.json:7862"
-  "personas/krishnamurthy_v1.json:7863"
-  "personas/suresh_v1.json:7864"
+  "personas/rohan_v1.json:7860"
+  "personas/naveen_v1.json:7861"
+  "personas/rajesh_v1.json:7862"
 )
 
 trap 'echo; echo "Stopping all bots…"; kill 0' EXIT INT TERM
@@ -27,6 +25,6 @@ for entry in "${BOTS[@]}"; do
 done
 
 echo
-echo "All five bots starting. Serve the frontend:  python -m http.server 8000"
+echo "All three bots starting. Serve the frontend:  python -m http.server 8000"
 echo "Then open http://localhost:8000/  ·  Ctrl+C here stops every bot."
 wait

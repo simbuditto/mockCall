@@ -21,7 +21,7 @@ This is why there is no `audio_chunk` entry below, unlike the original sketch.
 ## server → client
 
 ```jsonc
-{ "type": "session_started",  "persona_name": "Ramesh Kulkarni", "persona_id": "ramesh_v1" }
+{ "type": "session_started",  "persona_name": "Rohan Mehra", "persona_id": "rohan_v1" }
 
 { "type": "user_transcript",  "text": "...", "final": true }   // advisor speech (STT)
 { "type": "bot_transcript",   "text": "..." }                  // customer speech (LLM)
@@ -56,8 +56,7 @@ running on its own port:
 
 - Each persona runs its own `bot.py` process with `PERSONA_PATH` set to that
   persona file, on a dedicated port (see `run_bots.sh` and the `port` field in
-  `profiles.json`): ramesh 7860, priya 7861, vikram 7862, krishnamurthy 7863,
-  suresh 7864.
+  `profiles.json`): rohan 7860, naveen 7861, rajesh 7862.
 - The landing page reads `profiles.json`; when the advisor picks a profile the
   browser connects to that profile's port:
 

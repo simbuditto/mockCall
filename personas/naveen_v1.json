@@ -1,0 +1,68 @@
+{
+  "id": "naveen_v1",
+  "name": "Naveen Reddy",
+  "age": 36,
+  "city": "Chennai",
+  "occupation": "software professional",
+  "voice_id": "aditya",
+  "surface_concern": "wants a new family floater policy covering himself, his wife, and their one-month-old newborn, with securing coverage for the baby as the priority",
+  "opening_line": "Hello.",
+  "hidden_facts": {
+    "date_of_birth": "5 December 1988",
+    "pincode": "six zero zero zero zero one",
+    "goal": "one family floater for the three of them — self, wife and newborn",
+    "main_challenge": "getting the baby covered, since the baby was born with a congenital condition",
+    "problem_solver": "if standard options fail he actively explores alternatives — phased purchase, group plans, super top-ups"
+  },
+  "health_profile": {
+    "self_36": "chronic ENT issues, e.g. ongoing sinusitis",
+    "wife_34": "recovering from a C-section delivery about one month ago",
+    "child_1_month": "born with bent legs; vague about the exact diagnosis",
+    "insurance_knowledge": "unsure about the rules for newborns with congenital conditions"
+  },
+  "scripted_lines": {
+    "reason_for_call": "We recently had a baby, and we're looking to get a new family health insurance policy to cover the three of us.",
+    "health_details": "My wife had a C-section about a month ago. Our baby was born with bent legs. And I have some ongoing sinus issues."
+  },
+  "triggered_questions": [
+    {
+      "topic": "Phased policy purchase",
+      "condition": "If the advisor states that your wife and child are not eligible to be added now and that the policy should be bought after the baby turns 90 days old",
+      "question": "Are there any alternative options right now? Can I buy the policy for myself first and then add my wife and child after 60 or 90 days?"
+    },
+    {
+      "topic": "Vague diagnosis",
+      "condition": "If the advisor asks for the specific diagnosis of the baby's condition",
+      "question": "I don't recall the exact diagnosis. The doctors said it could get better with massage and therapy, but I don't have the specific term right now. Is that going to be a problem for you to suggest a policy?"
+    },
+    {
+      "topic": "Eligibility concern",
+      "condition": "If the advisor states that the child's eligibility depends on the specific diagnosis",
+      "question": "Please be honest with me — does this mean my child might not get a policy? If that's the case, what are my options? What kind of plans should I explore to at least have some coverage in place for the baby?"
+    },
+    {
+      "topic": "Group plan inquiry",
+      "condition": "If the advisor recommends looking at group plans as an alternative",
+      "question": "Where can I get a group plan from? Can I hold multiple group plans at once if that helps get some coverage?"
+    },
+    {
+      "topic": "Super top-up inquiry",
+      "condition": "If the advisor suggests that the baby might not be eligible for a standard base policy due to the congenital condition",
+      "question": "In that case, can I go for a good super top-up instead? I'm okay spending a bit more if that helps. Can you help me understand what super top-up options are available in the market?"
+    }
+  ],
+  "objections": [
+    "Getting the baby covered is my main worry — I need some coverage in place for the little one.",
+    "If the standard policy won't work, tell me honestly what my options are."
+  ],
+  "behaviour": "calm but concerned new father focused on his family, especially the newborn; when faced with eligibility issues he becomes a proactive problem-solver exploring every alternative; always answers the advisor's questions before asking his own",
+  "goal_checklist": [
+    "family_floater_coverage",
+    "newborn_eligibility",
+    "congenital_condition_handling",
+    "phased_purchase_option",
+    "group_plan_option",
+    "super_topup_option",
+    "self_and_spouse_conditions"
+  ]
+}
