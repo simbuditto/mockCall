@@ -44,9 +44,33 @@ This is why there is no `audio_chunk` entry below, unlike the original sketch.
 ## client → server
 
 ```jsonc
-{ "type": "start_session", "persona_id": "ramesh_v1" }   // which customer to load
+// The `persona_id` is not an app-event message — it's threaded through the
+// WebRTC offer's requestData, so the bot has the right persona loaded before
+// the pipeline even starts. See "Persona selection" below.
 { "type": "end_session" }                                 // advisor clicks End Call
 ```
+
+## Persona selection
+
+The browser picks one of the five customer profiles (see `profiles.json`) on
+the landing page. That `persona_id` is sent to the bot at connect time via the
+Pipecat client's `webrtcRequestParams.requestData`:
+
+```js
+await pc.connect({
+  webrtcRequestParams: {
+    endpoint: "http://localhost:7860/api/offer",
+    requestData: { persona_id: "ramesh_v1" }
+  },
+});
+```
+
+The Pipecat runner surfaces that payload on `runner_args.body`. `bot.py`
+resolves it to a file under `personas/` (whitelist-checked to block path
+traversal) and falls back to the `PERSONA_PATH` env var when the id is
+missing, malformed, or unknown — so raw `curl` calls and older clients keep
+working. The persona load happens once per session, before the pipeline is
+built.
 
 ## Notes
 
@@ -56,9 +80,6 @@ This is why there is no `audio_chunk` entry below, unlike the original sketch.
 - **`final` on `user_transcript`:** only `final: true` transcripts feed the LLM.
   Partials (`final: false`), if surfaced at all, are for the on-screen transcript
   only — never sent to the model. (Gotcha #3.)
-- **Persona selection:** V1 has one persona. `start_session.persona_id` is defined
-  now so the frontend contract is stable, but the backend currently also honours
-  the `PERSONA_PATH` env var as the default.
 - **Timestamps & speaker labels** live in the saved transcript JSON (Step 10), not
   in the streamed transcript messages.
 ```

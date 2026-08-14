@@ -1,12 +1,13 @@
 # Mock-Call Training Platform
 
-A browser-based voice trainer for insurance advisors. An advisor talks to a
-believable AI **customer** (persona "Ramesh"), practises a discovery conversation,
-and gets a saved transcript plus a live cost breakdown. Built as a working
-prototype to prove the pipeline, the economics, and the path to a full system.
+A browser-based voice trainer for insurance advisors. The advisor picks one of
+**five believable AI customers**, confirms a microphone, and then practises a
+discovery conversation. The transcript is saved and the cost breakdown is
+available on request. Built as a working prototype to prove the pipeline, the
+economics, and the path to a full system.
 
 - **Stack:** Pipecat (orchestration) · Sarvam Saaras v3 (STT) · Claude Haiku 4.5 (LLM persona) · Sarvam Bulbul v3 (TTS)
-- **Interface:** one HTML page, push-to-talk, microphone selector, live transcript, end-of-call cost card
+- **Interface:** one HTML page with three pre-call stages — profile picker → mic-confirm → call UI (push-to-talk, live transcript, stats on demand)
 - **Output:** per-call JSON transcript + goal checklist, per-turn cost CSV, validated ₹ cost summary
 
 ---
@@ -41,8 +42,10 @@ metering can never add latency.
 | `persistence.py` | Writes the per-call transcript + checklist + usage JSON |
 | `generate_fallback.py` | Pre-renders the "couldn't hear you" WAV in the persona voice |
 | `index.html` | The entire frontend (vanilla JS, Pipecat web client via CDN) |
-| `personas/ramesh_v1.json` | The customer: surface concern, hidden facts, objections, goal checklist |
+| `personas/*.json` | The five customers: surface concern, hidden facts, objections, goal checklist |
 | `personas/ramesh_v1_behaviour.md` | Plain-English behaviour rules behind the prompt |
+| `profiles.json` | Landing-page catalogue: id + short summary the frontend renders for the picker |
+| `QA_CHECKLIST.md` | Manual UX checks a human ticks after `scripts/verify.sh` passes |
 | `rates.json` | Auditable per-unit pricing (STT/TTS/LLM) with a `verified_on` date |
 | `contract.md` | The client⇄server event contract |
 | `stt_test/` | The STT accent/vocabulary check (paragraph + scoring script) |
@@ -95,9 +98,16 @@ python bot.py
 python -m http.server 8000
 ```
 
-Open **http://localhost:8000/**, pick your microphone, click **Start Call**.
-Ramesh greets you first; **hold the mic button (or Space) to talk**, release when
-done. Click **End Call** to finish — the transcript and a cost card appear.
+Open **http://localhost:8000/** and walk the three pre-call stages:
+
+1. **Pick a customer** from the five profile cards on the landing page.
+2. **Confirm your microphone** on the device-setup card (Start Call stays
+   disabled until you click *Confirm microphone*).
+3. **Click Start Call.** The chosen customer greets you first; **hold the mic
+   button (or Space) to talk**, release when done. Click **End Call** to finish.
+
+When the call ends, the transcript stays put. Click **Show session stats** at
+the bottom of the transcript to render the ₹ cost card on demand.
 
 Optional, one-time:
 
@@ -105,16 +115,20 @@ Optional, one-time:
 python generate_fallback.py        # renders fallback.wav in Ramesh's voice
 ```
 
-Config knobs (via `.env` or inline): `MAX_CALL_SECONDS`, `PERSONA_PATH`.
+Config knobs (via `.env` or inline): `MAX_CALL_SECONDS`, `PERSONA_PATH`
+(fallback persona when the browser doesn't send a `persona_id`), `PERSONAS_DIR`.
 
 ---
 
 ## How it works
 
-- **Persona as data.** `personas/*.json` holds the customer's surface concern,
+- **Personas as data.** `personas/*.json` holds each customer's surface concern,
   hidden facts, objections, and a 6–8 item goal checklist. `persona.py` renders
-  it into a system prompt whose core rule is *reveal a hidden fact only when the
-  advisor asks a question that would surface it.*
+  the chosen one into a system prompt whose core rule is *reveal a hidden fact
+  only when the advisor asks a question that would surface it.* The landing
+  page reads `profiles.json` to list the available customers; the browser sends
+  the picked `persona_id` at connect time (see `contract.md`) and `bot.py`
+  loads it before the pipeline starts.
 - **The pipeline.** `bot.py` wires Sarvam STT → Claude Haiku (persona, prompt
   caching on, short-answer cap) → Sarvam TTS over Pipecat's WebRTC transport.
 - **Usage metering.** `usage.py` reads Pipecat's metrics frames from an observer
@@ -124,8 +138,11 @@ Config knobs (via `.env` or inline): `MAX_CALL_SECONDS`, `PERSONA_PATH`.
 - **Persistence.** On end (advisor End, or the 5-minute cap), `persistence.py`
   writes `transcripts/<ts>.json` — the full transcript, the goal checklist, the
   usage summary, and the end reason — for trainer review.
-- **Cost card.** The frontend fetches the just-written session and shows the ₹
-  breakdown, cache-hit rate, and cost per turn.
+- **Cost card, on request.** When a call ends the frontend does *not* auto-render
+  the cost card — it appends a **Show session stats** button. Clicking it
+  fetches the just-written session and renders the ₹ breakdown, cache-hit rate,
+  and cost per turn. This keeps the post-call view focused on the transcript
+  unless the advisor asks for money detail.
 
 ---
 
